@@ -17,13 +17,19 @@
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
+    "@nordhealth/components": "^5.5.1",
+    "@nordhealth/css": "^5.3.1",
+    "@nordhealth/fonts": "^3.0.4",
+    "@nordhealth/tokens": "^9.0.5",
     "nuxt": "^4.6.4",
     "vue": "^3.5.44",
     "vue-router": "^5.4.0"
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.17.0",
+    "@tailwindcss/vite": "^4.3.4",
     "eslint": "^10.14.0",
+    "tailwindcss": "^4.3.4",
     "typescript": "^5.9.3",
     "vue-tsc": "^3.3.14"
   }

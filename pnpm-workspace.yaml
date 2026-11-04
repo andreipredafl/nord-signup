@@ -1,2 +1,7 @@
 allowBuilds:
   esbuild: true
+minimumReleaseAgeExclude:
+  - '@nordhealth/components@5.5.1'
+  - '@nordhealth/css@5.3.1'
+  - '@nordhealth/icons@3.22.0'
+  - '@nordhealth/tokens@9.0.5'
