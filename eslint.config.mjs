@@ -12,6 +12,8 @@ export default withNuxt(
     },
     rules: {
       'better-tailwindcss/no-unknown-classes': 'error',
+      // Nord web components use the native slot attribute, not Vue slots
+      'vue/no-deprecated-slot-attribute': ['error', { ignoreParents: ['/^nord-/'] }],
     },
   },
 )
