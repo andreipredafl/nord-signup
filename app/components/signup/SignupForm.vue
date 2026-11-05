@@ -7,8 +7,20 @@ import '@nordhealth/components/lib/Checkbox'
 import '@nordhealth/components/lib/Button'
 import '@nordhealth/components/lib/Icon'
 import '@nordhealth/components/lib/VisuallyHidden'
+import '@nordhealth/components/lib/Banner'
 
-const { form, errors, validateField, validateAll, clearError } = useSignupForm()
+const emit = defineEmits<{ success: [] }>()
+
+const {
+  form,
+  errors,
+  isSubmitting,
+  submitFailed,
+  validateField,
+  validateAll,
+  clearError,
+  submit,
+} = useSignupForm()
 
 const isPasswordVisible = ref(false)
 
@@ -17,10 +29,15 @@ const inputs = {
   password: useTemplateRef<Input>('passwordInput'),
 }
 
-function onSubmit(): void {
+async function onSubmit(): Promise<void> {
   const [firstInvalid] = validateAll()
   if (firstInvalid) {
     inputs[firstInvalid].value?.focus()
+    return
+  }
+  const accountCreated = await submit()
+  if (accountCreated) {
+    emit('success')
   }
 }
 </script>
@@ -35,6 +52,12 @@ function onSubmit(): void {
       @submit.prevent="onSubmit"
     >
       <nord-stack>
+        <nord-banner
+          v-if="submitFailed"
+          variant="danger"
+        >
+          We couldn’t create your account. Please try again.
+        </nord-banner>
         <nord-input
           ref="emailInput"
           v-model="form.email"
@@ -85,10 +108,14 @@ function onSubmit(): void {
           type="submit"
           variant="primary"
           expand
+          :loading="isSubmitting"
         >
           Sign up
         </nord-button>
       </nord-stack>
+      <nord-visually-hidden role="status">
+        {{ isSubmitting ? 'Creating your account' : '' }}
+      </nord-visually-hidden>
     </form>
   </nord-card>
 </template>

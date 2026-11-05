@@ -1,7 +1,14 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { signup } from '~/services/signup'
 import { useSignupForm } from './useSignupForm'
 
+vi.mock('~/services/signup')
+
 describe('useSignupForm', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
   it('shows both errors on an empty submit', () => {
     const { errors, validateAll } = useSignupForm()
 
@@ -62,5 +69,56 @@ describe('useSignupForm', () => {
     validateField('email')
 
     expect(errors.email).toBe('Enter a valid email')
+  })
+
+  it('sends the form values to the signup service', async () => {
+    const { form, submit } = useSignupForm()
+    form.email = 'user@example.com'
+    form.password = 'abcdefgh'
+    form.marketingOptIn = true
+
+    expect(await submit()).toBe(true)
+    expect(signup).toHaveBeenCalledWith({
+      email: 'user@example.com',
+      password: 'abcdefgh',
+      marketingOptIn: true,
+    })
+  })
+
+  it('is submitting only while the request is pending', async () => {
+    const { isSubmitting, submit } = useSignupForm()
+
+    const request = submit()
+    expect(isSubmitting.value).toBe(true)
+
+    await request
+    expect(isSubmitting.value).toBe(false)
+  })
+
+  it('ignores a second submit while the first is pending', async () => {
+    const { submit } = useSignupForm()
+
+    const results = await Promise.all([submit(), submit()])
+
+    expect(results).toEqual([true, false])
+    expect(signup).toHaveBeenCalledTimes(1)
+  })
+
+  it('reports a failed request', async () => {
+    vi.mocked(signup).mockRejectedValueOnce(new Error('network down'))
+    const { isSubmitting, submitFailed, submit } = useSignupForm()
+
+    expect(await submit()).toBe(false)
+    expect(submitFailed.value).toBe(true)
+    expect(isSubmitting.value).toBe(false)
+  })
+
+  it('clears the failure when the next attempt succeeds', async () => {
+    vi.mocked(signup).mockRejectedValueOnce(new Error('network down'))
+    const { submitFailed, submit } = useSignupForm()
+    await submit()
+
+    expect(await submit()).toBe(true)
+    expect(submitFailed.value).toBe(false)
   })
 })

@@ -1,12 +1,15 @@
-import type { Input } from '@nordhealth/components'
+import type { Checkbox, Input } from '@nordhealth/components'
 import type { DOMWrapper, VueWrapper } from '@vue/test-utils'
 import { mountSuspended } from '@nuxt/test-utils/runtime'
+import { flushPromises } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
+import { signup } from '~/services/signup'
 import SignupForm from './SignupForm.vue'
 
 // nord-button never finishes rendering inside a <form> in happy-dom, which hangs the run.
 vi.mock('@nordhealth/components/lib/Button', () => ({}))
+vi.mock('~/services/signup')
 
 describe('SignupForm', () => {
   let wrapper: VueWrapper
@@ -25,11 +28,18 @@ describe('SignupForm', () => {
     await nextTick()
   }
 
+  async function fillValidForm(): Promise<void> {
+    await type(email, 'user@example.com')
+    await type(password, 'abcdefgh')
+  }
+
   async function submit(): Promise<void> {
     await wrapper.find('form').trigger('submit')
+    await flushPromises()
   }
 
   beforeEach(async () => {
+    vi.clearAllMocks()
     wrapper = await mountSuspended(SignupForm, { attachTo: document.body })
     email = wrapper.find<Input>('nord-input[name="email"]').element
     password = wrapper.find<Input>('nord-input[name="password"]').element
@@ -74,13 +84,54 @@ describe('SignupForm', () => {
   })
 
   it('shows no errors on a valid submit', async () => {
-    await type(email, 'user@example.com')
-    await type(password, 'abcdefgh')
+    await fillValidForm()
 
     await submit()
 
     expect(email.error).toBeFalsy()
     expect(password.error).toBeFalsy()
+  })
+
+  it('does not send an invalid form', async () => {
+    await submit()
+
+    expect(signup).not.toHaveBeenCalled()
+    expect(wrapper.emitted('success')).toBeUndefined()
+  })
+
+  it('sends the form values and reports success', async () => {
+    await fillValidForm()
+
+    await submit()
+
+    expect(signup).toHaveBeenCalledWith({
+      email: 'user@example.com',
+      password: 'abcdefgh',
+      marketingOptIn: false,
+    })
+    expect(wrapper.emitted('success')).toHaveLength(1)
+    expect(wrapper.find('nord-banner').exists()).toBe(false)
+  })
+
+  it('sends the product updates choice when the checkbox is ticked', async () => {
+    const checkbox = wrapper.find<Checkbox>('nord-checkbox').element
+    await fillValidForm()
+    checkbox.checked = true
+    checkbox.dispatchEvent(new Event('change'))
+
+    await submit()
+
+    expect(signup).toHaveBeenCalledWith(expect.objectContaining({ marketingOptIn: true }))
+  })
+
+  it('shows an error banner when the request fails', async () => {
+    vi.mocked(signup).mockRejectedValueOnce(new Error('network down'))
+    await fillValidForm()
+
+    await submit()
+
+    expect(wrapper.find('nord-banner').exists()).toBe(true)
+    expect(wrapper.emitted('success')).toBeUndefined()
   })
 
   it('hides the password by default', () => {
