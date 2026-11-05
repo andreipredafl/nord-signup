@@ -28,6 +28,10 @@ describe('validatePassword', () => {
     expect(validatePassword('        ')).toBe('Enter a password')
   })
 
+  it('counts spaces as characters', () => {
+    expect(validatePassword('abcdefg ')).toBeUndefined()
+  })
+
   it('rejects a password under 8 characters', () => {
     expect(validatePassword('abcdefg')).toBe('Use at least 8 characters')
   })

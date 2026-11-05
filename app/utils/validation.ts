@@ -12,11 +12,10 @@ export function validateEmail(value: string): string | undefined {
 }
 
 export function validatePassword(value: string): string | undefined {
-  const password = value.trim()
-  if (password === '') {
+  if (value.trim() === '') {
     return 'Enter a password'
   }
-  if (password.length < 8) {
+  if (value.length < 8) {
     return 'Use at least 8 characters'
   }
   return undefined
