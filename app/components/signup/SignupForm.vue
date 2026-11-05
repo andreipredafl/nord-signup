@@ -5,8 +5,12 @@ import '@nordhealth/components/lib/Stack'
 import '@nordhealth/components/lib/Input'
 import '@nordhealth/components/lib/Checkbox'
 import '@nordhealth/components/lib/Button'
+import '@nordhealth/components/lib/Icon'
+import '@nordhealth/components/lib/VisuallyHidden'
 
 const { form, errors, validateField, validateAll, clearError } = useSignupForm()
+
+const isPasswordVisible = ref(false)
 
 const inputs = {
   email: useTemplateRef<Input>('emailInput'),
@@ -48,7 +52,7 @@ function onSubmit(): void {
           ref="passwordInput"
           v-model="form.password"
           label="Password"
-          type="password"
+          :type="isPasswordVisible ? 'text' : 'password'"
           name="password"
           autocomplete="new-password"
           hint="At least 8 characters"
@@ -57,7 +61,20 @@ function onSubmit(): void {
           expand
           @blur="validateField('password')"
           @input="clearError('password')"
-        />
+        >
+          <nord-button
+            slot="end"
+            type="button"
+            square
+            @mousedown.prevent
+            @click="isPasswordVisible = !isPasswordVisible"
+          >
+            <nord-icon :name="isPasswordVisible ? 'interface-edit-off' : 'interface-edit-on'" />
+            <nord-visually-hidden>
+              {{ isPasswordVisible ? 'Hide password' : 'Show password' }}
+            </nord-visually-hidden>
+          </nord-button>
+        </nord-input>
         <nord-checkbox
           v-model="form.marketingOptIn"
           type="checkbox"

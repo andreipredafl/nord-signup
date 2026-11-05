@@ -1,5 +1,5 @@
 import type { Input } from '@nordhealth/components'
-import type { VueWrapper } from '@vue/test-utils'
+import type { DOMWrapper, VueWrapper } from '@vue/test-utils'
 import { mountSuspended } from '@nuxt/test-utils/runtime'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
@@ -12,6 +12,7 @@ describe('SignupForm', () => {
   let wrapper: VueWrapper
   let email: Input
   let password: Input
+  let passwordToggle: DOMWrapper<Element>
 
   async function type(input: Input, value: string): Promise<void> {
     input.value = value
@@ -32,6 +33,7 @@ describe('SignupForm', () => {
     wrapper = await mountSuspended(SignupForm, { attachTo: document.body })
     email = wrapper.find<Input>('nord-input[name="email"]').element
     password = wrapper.find<Input>('nord-input[name="password"]').element
+    passwordToggle = wrapper.find('nord-input[name="password"] nord-button')
   })
 
   afterEach(() => {
@@ -79,5 +81,25 @@ describe('SignupForm', () => {
 
     expect(email.error).toBeFalsy()
     expect(password.error).toBeFalsy()
+  })
+
+  it('hides the password by default', () => {
+    expect(password.type).toBe('password')
+    expect(passwordToggle.text()).toBe('Show password')
+  })
+
+  it('shows the password when the toggle is clicked', async () => {
+    await passwordToggle.trigger('click')
+
+    expect(password.type).toBe('text')
+    expect(passwordToggle.text()).toBe('Hide password')
+  })
+
+  it('hides the password again on a second click', async () => {
+    await passwordToggle.trigger('click')
+    await passwordToggle.trigger('click')
+
+    expect(password.type).toBe('password')
+    expect(passwordToggle.text()).toBe('Show password')
   })
 })
